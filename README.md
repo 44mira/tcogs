@@ -6,7 +6,7 @@ A Turing machine visualizer written in *raylib* and *Rust*.
 
 Takes in an *unordered* `.csv` file with the following columns:
 
-> [!INFO] The order of the rows does not matter as these are just state
+> [!TIP] The order of the rows does not matter as these are just state
 > definitions for the machine.
 
 ```
