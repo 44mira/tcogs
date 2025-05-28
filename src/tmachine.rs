@@ -40,9 +40,7 @@ struct TuringMachine {
 impl TuringMachine {
   #[allow(unused_mut)]
   fn new() -> Self {
-    // initialize a default 2048 size for the memory tape for optimized access
-    // on small tape sizes (no amortized indexing time).
-    let mut memory_tape = Vec::with_capacity(2048);
+    let mut memory_tape = vec!['_'; 2048];
     let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
 
     TuringMachine {
