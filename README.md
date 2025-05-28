@@ -38,10 +38,10 @@ Takes in an *unordered* `.csv` file with the following columns:
 
 ## TODO
 - [x] Initialize raylib project
-- [ ] Create a data structure for the Turing machine
-  - [ ] Memory tape
-  - [ ] State lookup table
-  - [ ] Add tests
+- [x] Create a data structure for the Turing machine
+  - [x] Memory tape
+  - [x] State lookup table
+  - [x] Add tests
 - [ ] Parse CSVs into a machine
   - [ ] Add tests
 - [ ] Evaluate a machine based on some input
