@@ -82,6 +82,11 @@ impl TuringMachine {
   /// Update the Turing machine based on the input at the pointer and the current
   /// state.
   fn advance(&mut self) {
+    // no-op on HALT state
+    if self.current_state == Some("HALT".to_owned()) {
+      return;
+    }
+
     let input = self.read();
     let Some(state) = self
       .lookup
@@ -163,5 +168,18 @@ mod tests {
     assert_eq!(Some("START".to_owned()), tm.current_state);
     tm.advance();
     assert_eq!(None, tm.current_state);
+  }
+
+  #[test]
+  fn tm_halt() {
+    let mut tm = TuringMachine::new();
+
+    add_state(&mut tm, "START", '_', '#', Direction::Right, "HALT");
+
+    assert_eq!(Some("START".to_owned()), tm.current_state);
+    tm.advance();
+    assert_eq!(Some("HALT".to_owned()), tm.current_state);
+    tm.advance();
+    assert_eq!(Some("HALT".to_owned()), tm.current_state);
   }
 }
