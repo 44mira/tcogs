@@ -29,7 +29,7 @@ struct TuringMachine {
   memory_tape: Vec<char>,
 
   // TODO: Not sure about this, maybe state representations should be hashed
-  current_state: Option<String>,
+  current_state: String,
 
   // lookups are assigned by name and input, to reduce hashmap depth
   lookup: HashMap<(String, char), TMState>,
@@ -42,11 +42,11 @@ impl TuringMachine {
   fn new() -> Self {
     // initialize a default 2048 size for the memory tape for optimized access
     // on small tape sizes (no amortized indexing time).
-    let mut memory_tape = vec!['_'; 2048];
+    let mut memory_tape = Vec::with_capacity(2048);
     let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
 
     TuringMachine {
-      current_state: Some("START".to_owned()),
+      current_state: "START".to_owned(),
       tape_pointer: 0,
       memory_tape,
       lookup,
@@ -54,12 +54,8 @@ impl TuringMachine {
   }
 
   /// Reads the memory tape at the tape pointer, returning the found character.
-  fn read(&self) -> Option<char> {
-    if self.current_state.is_none() {
-      return None;
-    }
-
-    Some(self.memory_tape[self.tape_pointer])
+  fn read(&self) -> char {
+    self.memory_tape[self.tape_pointer]
   }
 
   /// Writes the character `e` in the memory tape at the tape pointer.
@@ -107,7 +103,7 @@ mod tests {
   fn tm_init() {
     let tm = TuringMachine::new();
 
-    assert_eq!("START", tm.current_state.unwrap());
+    assert_eq!("START", tm.current_state);
     assert_eq!(0, tm.tape_pointer);
     assert_eq!(2048, tm.memory_tape.capacity());
   }
@@ -117,13 +113,12 @@ mod tests {
     let mut tm = TuringMachine::new();
     tm.memory_tape = "abba".chars().collect();
 
-    assert_eq!('a', tm.read().unwrap());
+    assert_eq!('a', tm.read());
     tm.step('#', Direction::Right);
-    assert_eq!('b', tm.read().unwrap());
+    assert_eq!('b', tm.read());
     tm.step('b', Direction::Left);
-    assert_eq!('#', tm.read().unwrap());
+    assert_eq!('#', tm.read());
   }
-
   #[test]
   fn tm_add_state() {
     let mut tm = TuringMachine::new();
