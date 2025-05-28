@@ -2,13 +2,13 @@
 
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Direction {
   Left,
   Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 struct TMState {
   output: char,
   direction: Direction,
@@ -79,6 +79,22 @@ impl TuringMachine {
     _ = self.lookup.insert((name.to_owned(), expected_input), state);
   }
 
+  /// Update the Turing machine based on the input at the pointer and the current
+  /// state.
+  fn advance(&mut self) {
+    let input = self.read();
+    let Some(state) = self
+      .lookup
+      .get(&(self.current_state.clone().unwrap(), input))
+      .cloned()
+    else {
+      self.current_state = None;
+      return;
+    };
+
+    self.step(state.output, state.direction);
+    self.current_state = Some(state.next);
+  }
 }
 
 #[cfg(test)]
@@ -101,7 +117,7 @@ mod tests {
   fn tm_init() {
     let tm = TuringMachine::new();
 
-    assert_eq!("START", tm.current_state);
+    assert_eq!("START", tm.current_state.unwrap());
     assert_eq!(0, tm.tape_pointer);
     assert_eq!(2048, tm.memory_tape.capacity());
   }
@@ -131,4 +147,21 @@ mod tests {
   }
 
   #[test]
+  fn tm_advance() {
+    let mut tm = TuringMachine::new();
+    tm.memory_tape[0] = 'a';
+
+    add_state(&mut tm, "START", 'a', '#', Direction::Right, "2");
+    add_state(&mut tm, "2", '_', 'a', Direction::Left, "START");
+
+    assert_eq!('a', tm.read());
+    tm.advance();
+    assert_eq!('_', tm.read());
+    assert_eq!(Some("2".to_owned()), tm.current_state);
+    tm.advance();
+    assert_eq!('#', tm.read());
+    assert_eq!(Some("START".to_owned()), tm.current_state);
+    tm.advance();
+    assert_eq!(None, tm.current_state);
+  }
 }
