@@ -47,12 +47,9 @@ impl TuringMachine {
 
   /// Updates the character found at the tape pointer using `updater`, and then
   /// moves the tape pointer one step to the specified Direction in `dir`.
-  fn step<F>(&mut self, updater: F, dir: Direction)
-  where
-    F: FnOnce(char) -> char,
-  {
+  fn step(&mut self, e: char, dir: Direction) {
     // update the tape
-    self.write(updater(self.read()));
+    self.write(e);
 
     // move pointer
     match dir {
@@ -81,9 +78,9 @@ mod tests {
     tm.memory_tape = "abba".chars().collect();
 
     assert_eq!('a', tm.read());
-    tm.step(|_| '#', Direction::Right);
+    tm.step('#', Direction::Right);
     assert_eq!('b', tm.read());
-    tm.step(|x| x, Direction::Left);
+    tm.step('b', Direction::Left);
     assert_eq!('#', tm.read());
   }
 }
