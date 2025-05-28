@@ -29,7 +29,7 @@ struct TuringMachine {
   memory_tape: Vec<char>,
 
   // TODO: Not sure about this, maybe state representations should be hashed
-  current_state: String,
+  current_state: Option<String>,
 
   // lookups are assigned by name and input, to reduce hashmap depth
   lookup: HashMap<(String, char), TMState>,
@@ -44,7 +44,7 @@ impl TuringMachine {
     let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
 
     TuringMachine {
-      current_state: "START".to_owned(),
+      current_state: Some("START".to_owned()),
       tape_pointer: 0,
       memory_tape,
       lookup,
