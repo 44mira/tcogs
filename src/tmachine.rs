@@ -2,9 +2,27 @@
 
 use std::collections::HashMap;
 
+#[derive(Debug, PartialEq)]
 enum Direction {
   Left,
   Right,
+}
+
+#[derive(Debug, PartialEq)]
+struct TMState {
+  output: char,
+  direction: Direction,
+  next: String,
+}
+
+impl TMState {
+  fn new(output: char, direction: Direction, next: String) -> Self {
+    TMState {
+      output,
+      direction,
+      next,
+    }
+  }
 }
 
 struct TuringMachine {
@@ -14,7 +32,7 @@ struct TuringMachine {
   current_state: String,
 
   // lookups are assigned by name and input, to reduce hashmap depth
-  lookup: HashMap<(String, char), String>,
+  lookup: HashMap<(String, char), TMState>,
 
   tape_pointer: usize,
 }
@@ -25,7 +43,7 @@ impl TuringMachine {
     // initialize a default 2048 size for the memory tape for optimized access
     // on small tape sizes (no amortized indexing time).
     let mut memory_tape = Vec::with_capacity(2048);
-    let mut lookup: HashMap<(String, char), String> = HashMap::new();
+    let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
 
     TuringMachine {
       current_state: "START".to_owned(),
@@ -57,11 +75,29 @@ impl TuringMachine {
       Direction::Left => self.tape_pointer -= 1,
     }
   }
+
+  /// Add a state to the lookup table. Replaces existing state.
+  fn add_state(&mut self, name: &str, expected_input: char, state: TMState) {
+    _ = self.lookup.insert((name.to_owned(), expected_input), state);
+  }
+
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  /// helper function for tests
+  fn add_state(
+    tm: &mut TuringMachine,
+    name: &str,
+    input: char,
+    output: char,
+    dir: Direction,
+    next: &str,
+  ) {
+    tm.add_state(name, input, TMState::new(output, dir, next.to_owned()));
+  }
 
   #[test]
   fn tm_init() {
@@ -83,4 +119,18 @@ mod tests {
     tm.step('b', Direction::Left);
     assert_eq!('#', tm.read());
   }
+  #[test]
+  fn tm_add_state() {
+    let mut tm = TuringMachine::new();
+
+    add_state(&mut tm, "A", 'a', 'b', Direction::Right, "START");
+    add_state(&mut tm, "START", 'a', 'b', Direction::Right, "A");
+
+    assert_eq!(
+      tm.lookup.get(&("START".to_owned(), 'a')),
+      Some(&TMState::new('b', Direction::Right, "A".to_owned()))
+    )
+  }
+
+  #[test]
 }
