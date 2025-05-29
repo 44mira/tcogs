@@ -3,20 +3,20 @@
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
-enum Direction {
+pub enum Direction {
   Left,
   Right,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-struct TMState {
+pub struct TMState {
   output: char,
   direction: Direction,
   next: String,
 }
 
 impl TMState {
-  fn new(output: char, direction: Direction, next: String) -> Self {
+  pub fn new(output: char, direction: Direction, next: String) -> Self {
     TMState {
       output,
       direction,
@@ -25,7 +25,7 @@ impl TMState {
   }
 }
 
-struct TuringMachine {
+pub struct TuringMachine {
   memory_tape: Vec<char>,
 
   // TODO: Not sure about this, maybe state representations should be hashed
@@ -39,7 +39,7 @@ struct TuringMachine {
 
 impl TuringMachine {
   #[allow(unused_mut)]
-  fn new() -> Self {
+  pub fn new() -> Self {
     let mut memory_tape = vec!['_'; 2048];
     let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
 
@@ -75,13 +75,18 @@ impl TuringMachine {
   }
 
   /// Add a state to the lookup table. Replaces existing state.
-  fn add_state(&mut self, name: &str, expected_input: char, state: TMState) {
+  pub fn add_state(
+    &mut self,
+    name: &str,
+    expected_input: char,
+    state: TMState,
+  ) {
     _ = self.lookup.insert((name.to_owned(), expected_input), state);
   }
 
   /// Update the Turing machine based on the input at the pointer and the current
   /// state.
-  fn advance(&mut self) {
+  pub fn advance(&mut self) {
     // no-op on HALT state
     if self.current_state == Some("HALT".to_owned()) {
       return;
