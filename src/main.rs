@@ -1,3 +1,5 @@
+mod tmachine;
+
 use raylib::prelude::*;
 
 fn main() {
