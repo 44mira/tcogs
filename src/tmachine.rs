@@ -61,7 +61,8 @@ impl TuringMachine {
     self.memory_tape[self.tape_pointer] = e;
   }
 
-  /// Updates the character found at the tape pointer using `updater`, and then
+  /// utility function for setting the first indices of the memory tape to some
+  /// string.
   /// moves the tape pointer one step to the specified Direction in `dir`.
   fn step(&mut self, e: char, dir: Direction) {
     // update the tape
