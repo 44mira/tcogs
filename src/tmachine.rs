@@ -51,6 +51,13 @@ impl TuringMachine {
     }
   }
 
+  pub fn from(input: &str) -> Self {
+    let mut tm = Self::new();
+    tm.set_tape(input);
+
+    return tm;
+  }
+
   /// Reads the memory tape at the tape pointer, returning the found character.
   fn read(&self) -> char {
     self.memory_tape[self.tape_pointer]
@@ -63,6 +70,15 @@ impl TuringMachine {
 
   /// utility function for setting the first indices of the memory tape to some
   /// string.
+  pub fn set_tape(&mut self, input: &str) {
+    let content = input.chars();
+
+    for (i, item) in content.into_iter().enumerate() {
+      self.memory_tape[i] = item;
+    }
+  }
+
+  /// Updates the character found at the tape pointer using `char`, and then
   /// moves the tape pointer one step to the specified Direction in `dir`.
   fn step(&mut self, e: char, dir: Direction) {
     // update the tape
@@ -85,8 +101,8 @@ impl TuringMachine {
     _ = self.lookup.insert((name.to_owned(), expected_input), state);
   }
 
-  /// Update the Turing machine based on the input at the pointer and the current
-  /// state.
+  /// Update the Turing machine based on the input at the pointer and the
+  /// current state.
   pub fn advance(&mut self) {
     // no-op on HALT state
     if self.current_state == Some("HALT".to_owned()) {
@@ -187,5 +203,17 @@ mod tests {
     assert_eq!(Some("HALT".to_owned()), tm.current_state);
     tm.advance();
     assert_eq!(Some("HALT".to_owned()), tm.current_state);
+  }
+
+  #[test]
+  fn tm_set_state() {
+    let test_string = "hello!";
+    let mut tm = TuringMachine::from(test_string);
+
+    for char in test_string.chars() {
+      assert_eq!(char, tm.read());
+      tm.step(char, Direction::Right);
+    }
+    assert_eq!('_', tm.read());
   }
 }
