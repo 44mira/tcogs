@@ -8,6 +8,15 @@ pub enum Direction {
   Right,
 }
 
+impl Direction {
+  fn flip(&self) -> Self {
+    match self {
+      Direction::Left => Direction::Right,
+      Direction::Right => Direction::Left,
+    }
+  }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Transition {
   output: char,
