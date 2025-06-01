@@ -41,6 +41,7 @@ Takes in an *unordered* `.csv` file with the following columns:
 - [x] Create a data structure for the Turing machine
   - [x] Memory tape
   - [x] State lookup table
+  - [ ] Undo stack
   - [x] Add tests
 - [ ] Parse CSVs into a machine
   - [ ] Add tests
