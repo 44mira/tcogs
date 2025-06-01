@@ -103,7 +103,7 @@ impl TuringMachine {
 
   /// Update the Turing machine based on the input at the pointer and the
   /// current state.
-  pub fn advance(&mut self) {
+  pub fn forward(&mut self) {
     // no-op on HALT state
     if self.current_state == Some("HALT".to_owned()) {
       return;
@@ -175,7 +175,7 @@ mod tests {
   }
 
   #[test]
-  fn tm_advance() {
+  fn tm_forward() {
     let mut tm = TuringMachine::new();
     tm.memory_tape[0] = 'a';
 
@@ -183,13 +183,13 @@ mod tests {
     add_state(&mut tm, "2", '_', 'a', Direction::Left, "START");
 
     assert_eq!('a', tm.read());
-    tm.advance();
+    tm.forward();
     assert_eq!('_', tm.read());
     assert_eq!(Some("2".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!('#', tm.read());
     assert_eq!(Some("START".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!(None, tm.current_state);
   }
 
@@ -200,9 +200,9 @@ mod tests {
     add_state(&mut tm, "START", '_', '#', Direction::Right, "HALT");
 
     assert_eq!(Some("START".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!(Some("HALT".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!(Some("HALT".to_owned()), tm.current_state);
   }
 
