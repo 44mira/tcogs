@@ -37,7 +37,7 @@ impl Transition {
 pub struct TuringMachine {
   memory_tape: Vec<char>,
 
-  // this stack will be hold the inverse transitions of every advance, popping
+  // This stack will hold the inverse transitions of every .forward(), popping
   // from this stack and applying the TMState will effectively *undo* a
   // transition.
   undo_stack: Vec<Transition>,
@@ -84,7 +84,7 @@ impl TuringMachine {
     self.memory_tape[self.tape_pointer] = e;
   }
 
-  /// utility function for setting the first indices of the memory tape to some
+  /// Utility function for setting the first indices of the memory tape to some
   /// string.
   pub fn set_tape(&mut self, input: &str) {
     let content = input.chars();
@@ -146,7 +146,7 @@ impl TuringMachine {
     self.current_state = Some(state.next);
   }
 
-  /// Undos the most recent transition done on a TuringMachine using its
+  /// Undoes the most recent transition done on a TuringMachine using its
   /// `undo_stack`.
   pub fn backward(&mut self) {
     let Some(inverse) = self.undo_stack.pop() else {
