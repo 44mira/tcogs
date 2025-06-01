@@ -96,9 +96,11 @@ impl TuringMachine {
     &mut self,
     name: &str,
     expected_input: char,
-    state: Transition,
+    transition: Transition,
   ) {
-    _ = self.lookup.insert((name.to_owned(), expected_input), state);
+    _ = self
+      .lookup
+      .insert((name.to_owned(), expected_input), transition);
   }
 
   /// Update the Turing machine based on the input at the pointer and the
