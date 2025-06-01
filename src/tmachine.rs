@@ -25,7 +25,7 @@ pub struct Transition {
 }
 
 impl Transition {
-  pub fn new(output: char, direction: Direction, next: String) -> Self {
+  pub fn from(output: char, direction: Direction, next: String) -> Self {
     Transition {
       output,
       direction,
@@ -148,7 +148,7 @@ mod tests {
     dir: Direction,
     next: &str,
   ) {
-    tm.add_state(name, input, Transition::new(output, dir, next.to_owned()));
+    tm.add_state(name, input, Transition::from(output, dir, next.to_owned()));
   }
 
   #[test]
@@ -181,7 +181,7 @@ mod tests {
 
     assert_eq!(
       tm.lookup.get(&("START".to_owned(), 'a')),
-      Some(&Transition::new('b', Direction::Right, "A".to_owned()))
+      Some(&Transition::from('b', Direction::Right, "A".to_owned()))
     )
   }
 
