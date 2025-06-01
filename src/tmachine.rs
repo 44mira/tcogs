@@ -37,6 +37,11 @@ impl Transition {
 pub struct TuringMachine {
   memory_tape: Vec<char>,
 
+  // this stack will be hold the inverse transitions of every advance, popping
+  // from this stack and applying the TMState will effectively *undo* a
+  // transition.
+  undo_stack: Vec<Transition>,
+
   // TODO: Not sure about this, maybe state representations should be hashed
   current_state: Option<String>,
 
@@ -50,10 +55,12 @@ impl TuringMachine {
   #[allow(unused_mut)]
   pub fn new() -> Self {
     let mut memory_tape = vec!['_'; 2048];
+    let mut undo_stack = Vec::with_capacity(4096);
     let mut lookup: HashMap<(String, char), Transition> = HashMap::new();
 
     TuringMachine {
       current_state: Some("START".to_owned()),
+      undo_stack,
       tape_pointer: 0,
       memory_tape,
       lookup,
@@ -130,8 +137,31 @@ impl TuringMachine {
       return;
     };
 
+    self.undo_stack.push(Transition::from(
+      input,
+      state.direction.flip(),
+      self.current_state.clone().unwrap(),
+    ));
     self.step(state.output, state.direction);
     self.current_state = Some(state.next);
+  }
+
+  /// Undos the most recent transition done on a TuringMachine using its
+  /// `undo_stack`.
+  pub fn backward(&mut self) {
+    let Some(inverse) = self.undo_stack.pop() else {
+      return;
+    };
+
+    // move pointer
+    match inverse.direction {
+      Direction::Right => self.tape_pointer += 1,
+      Direction::Left => self.tape_pointer -= 1,
+    }
+
+    // update the tape
+    self.write(inverse.output);
+    self.current_state = Some(inverse.next);
   }
 }
 
@@ -227,5 +257,32 @@ mod tests {
       tm.step(char, Direction::Right);
     }
     assert_eq!('_', tm.read());
+  }
+
+  #[test]
+  fn tm_backward() {
+    let mut tm = TuringMachine::from("abab");
+
+    add_state(&mut tm, "START", 'a', '#', Direction::Right, "1");
+    add_state(&mut tm, "1", 'b', '#', Direction::Left, "START");
+
+    assert_eq!('a', tm.read());
+    tm.forward();
+    assert_eq!('#', tm.memory_tape[0]);
+    assert_eq!('b', tm.read());
+    tm.forward();
+    assert_eq!('#', tm.memory_tape[1]);
+    assert_eq!('#', tm.read());
+
+    let expected_undo_stack = vec![
+      Transition::from('a', Direction::Left, "START".to_owned()),
+      Transition::from('b', Direction::Right, "1".to_owned()),
+    ];
+    assert_eq!(expected_undo_stack, tm.undo_stack);
+
+    tm.backward();
+    assert_eq!('b', tm.read());
+    tm.backward();
+    assert_eq!('a', tm.read());
   }
 }
