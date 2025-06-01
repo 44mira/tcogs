@@ -8,16 +8,25 @@ pub enum Direction {
   Right,
 }
 
+impl Direction {
+  fn flip(&self) -> Self {
+    match self {
+      Direction::Left => Direction::Right,
+      Direction::Right => Direction::Left,
+    }
+  }
+}
+
 #[derive(Debug, PartialEq, Clone)]
-pub struct TMState {
+pub struct Transition {
   output: char,
   direction: Direction,
   next: String,
 }
 
-impl TMState {
-  pub fn new(output: char, direction: Direction, next: String) -> Self {
-    TMState {
+impl Transition {
+  pub fn from(output: char, direction: Direction, next: String) -> Self {
+    Transition {
       output,
       direction,
       next,
@@ -28,11 +37,16 @@ impl TMState {
 pub struct TuringMachine {
   memory_tape: Vec<char>,
 
+  // This stack will hold the inverse transitions of every .forward(), popping
+  // from this stack and applying the TMState will effectively *undo* a
+  // transition.
+  undo_stack: Vec<Transition>,
+
   // TODO: Not sure about this, maybe state representations should be hashed
   current_state: Option<String>,
 
   // lookups are assigned by name and input, to reduce hashmap depth
-  lookup: HashMap<(String, char), TMState>,
+  lookup: HashMap<(String, char), Transition>,
 
   tape_pointer: usize,
 }
@@ -41,10 +55,12 @@ impl TuringMachine {
   #[allow(unused_mut)]
   pub fn new() -> Self {
     let mut memory_tape = vec!['_'; 2048];
-    let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
+    let mut undo_stack = Vec::with_capacity(4096);
+    let mut lookup: HashMap<(String, char), Transition> = HashMap::new();
 
     TuringMachine {
       current_state: Some("START".to_owned()),
+      undo_stack,
       tape_pointer: 0,
       memory_tape,
       lookup,
@@ -68,7 +84,7 @@ impl TuringMachine {
     self.memory_tape[self.tape_pointer] = e;
   }
 
-  /// utility function for setting the first indices of the memory tape to some
+  /// Utility function for setting the first indices of the memory tape to some
   /// string.
   pub fn set_tape(&mut self, input: &str) {
     let content = input.chars();
@@ -96,14 +112,16 @@ impl TuringMachine {
     &mut self,
     name: &str,
     expected_input: char,
-    state: TMState,
+    transition: Transition,
   ) {
-    _ = self.lookup.insert((name.to_owned(), expected_input), state);
+    _ = self
+      .lookup
+      .insert((name.to_owned(), expected_input), transition);
   }
 
   /// Update the Turing machine based on the input at the pointer and the
   /// current state.
-  pub fn advance(&mut self) {
+  pub fn forward(&mut self) {
     // no-op on HALT state
     if self.current_state == Some("HALT".to_owned()) {
       return;
@@ -119,8 +137,31 @@ impl TuringMachine {
       return;
     };
 
+    self.undo_stack.push(Transition::from(
+      input,
+      state.direction.flip(),
+      self.current_state.clone().unwrap(),
+    ));
     self.step(state.output, state.direction);
     self.current_state = Some(state.next);
+  }
+
+  /// Undoes the most recent transition done on a TuringMachine using its
+  /// `undo_stack`.
+  pub fn backward(&mut self) {
+    let Some(inverse) = self.undo_stack.pop() else {
+      return;
+    };
+
+    // move pointer
+    match inverse.direction {
+      Direction::Right => self.tape_pointer += 1,
+      Direction::Left => self.tape_pointer -= 1,
+    }
+
+    // update the tape
+    self.write(inverse.output);
+    self.current_state = Some(inverse.next);
   }
 }
 
@@ -137,7 +178,7 @@ mod tests {
     dir: Direction,
     next: &str,
   ) {
-    tm.add_state(name, input, TMState::new(output, dir, next.to_owned()));
+    tm.add_state(name, input, Transition::from(output, dir, next.to_owned()));
   }
 
   #[test]
@@ -160,6 +201,7 @@ mod tests {
     tm.step('b', Direction::Left);
     assert_eq!('#', tm.read());
   }
+
   #[test]
   fn tm_add_state() {
     let mut tm = TuringMachine::new();
@@ -169,12 +211,12 @@ mod tests {
 
     assert_eq!(
       tm.lookup.get(&("START".to_owned(), 'a')),
-      Some(&TMState::new('b', Direction::Right, "A".to_owned()))
+      Some(&Transition::from('b', Direction::Right, "A".to_owned()))
     )
   }
 
   #[test]
-  fn tm_advance() {
+  fn tm_forward() {
     let mut tm = TuringMachine::new();
     tm.memory_tape[0] = 'a';
 
@@ -182,13 +224,13 @@ mod tests {
     add_state(&mut tm, "2", '_', 'a', Direction::Left, "START");
 
     assert_eq!('a', tm.read());
-    tm.advance();
+    tm.forward();
     assert_eq!('_', tm.read());
     assert_eq!(Some("2".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!('#', tm.read());
     assert_eq!(Some("START".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!(None, tm.current_state);
   }
 
@@ -199,9 +241,9 @@ mod tests {
     add_state(&mut tm, "START", '_', '#', Direction::Right, "HALT");
 
     assert_eq!(Some("START".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!(Some("HALT".to_owned()), tm.current_state);
-    tm.advance();
+    tm.forward();
     assert_eq!(Some("HALT".to_owned()), tm.current_state);
   }
 
@@ -215,5 +257,32 @@ mod tests {
       tm.step(char, Direction::Right);
     }
     assert_eq!('_', tm.read());
+  }
+
+  #[test]
+  fn tm_backward() {
+    let mut tm = TuringMachine::from("abab");
+
+    add_state(&mut tm, "START", 'a', '#', Direction::Right, "1");
+    add_state(&mut tm, "1", 'b', '#', Direction::Left, "START");
+
+    assert_eq!('a', tm.read());
+    tm.forward();
+    assert_eq!('#', tm.memory_tape[0]);
+    assert_eq!('b', tm.read());
+    tm.forward();
+    assert_eq!('#', tm.memory_tape[1]);
+    assert_eq!('#', tm.read());
+
+    let expected_undo_stack = vec![
+      Transition::from('a', Direction::Left, "START".to_owned()),
+      Transition::from('b', Direction::Right, "1".to_owned()),
+    ];
+    assert_eq!(expected_undo_stack, tm.undo_stack);
+
+    tm.backward();
+    assert_eq!('b', tm.read());
+    tm.backward();
+    assert_eq!('a', tm.read());
   }
 }
