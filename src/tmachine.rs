@@ -9,15 +9,15 @@ pub enum Direction {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct TMState {
+pub struct Transition {
   output: char,
   direction: Direction,
   next: String,
 }
 
-impl TMState {
+impl Transition {
   pub fn new(output: char, direction: Direction, next: String) -> Self {
-    TMState {
+    Transition {
       output,
       direction,
       next,
@@ -32,7 +32,7 @@ pub struct TuringMachine {
   current_state: Option<String>,
 
   // lookups are assigned by name and input, to reduce hashmap depth
-  lookup: HashMap<(String, char), TMState>,
+  lookup: HashMap<(String, char), Transition>,
 
   tape_pointer: usize,
 }
@@ -41,7 +41,7 @@ impl TuringMachine {
   #[allow(unused_mut)]
   pub fn new() -> Self {
     let mut memory_tape = vec!['_'; 2048];
-    let mut lookup: HashMap<(String, char), TMState> = HashMap::new();
+    let mut lookup: HashMap<(String, char), Transition> = HashMap::new();
 
     TuringMachine {
       current_state: Some("START".to_owned()),
@@ -96,7 +96,7 @@ impl TuringMachine {
     &mut self,
     name: &str,
     expected_input: char,
-    state: TMState,
+    state: Transition,
   ) {
     _ = self.lookup.insert((name.to_owned(), expected_input), state);
   }
@@ -137,7 +137,7 @@ mod tests {
     dir: Direction,
     next: &str,
   ) {
-    tm.add_state(name, input, TMState::new(output, dir, next.to_owned()));
+    tm.add_state(name, input, Transition::new(output, dir, next.to_owned()));
   }
 
   #[test]
@@ -160,6 +160,7 @@ mod tests {
     tm.step('b', Direction::Left);
     assert_eq!('#', tm.read());
   }
+
   #[test]
   fn tm_add_state() {
     let mut tm = TuringMachine::new();
@@ -169,7 +170,7 @@ mod tests {
 
     assert_eq!(
       tm.lookup.get(&("START".to_owned(), 'a')),
-      Some(&TMState::new('b', Direction::Right, "A".to_owned()))
+      Some(&Transition::new('b', Direction::Right, "A".to_owned()))
     )
   }
 
