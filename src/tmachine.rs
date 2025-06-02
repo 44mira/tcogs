@@ -163,6 +163,11 @@ impl TuringMachine {
     self.write(inverse.output);
     self.current_state = Some(inverse.next);
   }
+
+  /// Displays the current content of the tape up until the first empty cell.
+  pub fn display_tape(&self) -> Vec<&char> {
+    self.memory_tape.iter().take_while(|&&x| x != '_').collect()
+  }
 }
 
 #[cfg(test)]
@@ -284,5 +289,13 @@ mod tests {
     assert_eq!('b', tm.read());
     tm.backward();
     assert_eq!('a', tm.read());
+  }
+
+  #[test]
+  fn tm_display_tape() {
+    let tm = TuringMachine::from("hello");
+
+    let expected: Vec<char> = "hello".chars().collect();
+    assert_eq!(expected.iter().collect::<Vec<&char>>(), tm.display_tape());
   }
 }
