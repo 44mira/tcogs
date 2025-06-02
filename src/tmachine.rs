@@ -167,12 +167,13 @@ impl TuringMachine {
   }
 
   /// Displays the current content of the tape up until the first empty cell.
-  pub fn display_tape(&self) -> Vec<&char> {
-    self
-      .memory_tape
-      .iter()
-      .take_while(|&&x| x != Self::EMPTY)
-      .collect()
+  pub fn display_tape(&self) -> &[char] {
+    let Some(end) = self.memory_tape.iter().position(|&x| x == Self::EMPTY)
+    else {
+      return &self.memory_tape;
+    };
+
+    &self.memory_tape[..end]
   }
 }
 
@@ -313,9 +314,12 @@ mod tests {
 
   #[test]
   fn tm_display_tape() {
-    let tm = TuringMachine::from("hello");
+    let mut tm = TuringMachine::from("hello");
 
     let expected: Vec<char> = "hello".chars().collect();
-    assert_eq!(expected.iter().collect::<Vec<&char>>(), tm.display_tape());
+    assert_eq!(expected, tm.display_tape());
+
+    tm.memory_tape.truncate(5);
+    assert_eq!(expected, tm.display_tape());
   }
 }
