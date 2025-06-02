@@ -52,10 +52,13 @@ pub struct TuringMachine {
 }
 
 impl TuringMachine {
+  pub const EMPTY: char = '_';
+  pub const TAPE_SIZE: usize = 2048;
+
   #[allow(unused_mut)]
   pub fn new() -> Self {
-    let mut memory_tape = vec!['_'; 2048];
-    let mut undo_stack = Vec::with_capacity(4096);
+    let mut memory_tape = vec![Self::EMPTY; Self::TAPE_SIZE];
+    let mut undo_stack = Vec::with_capacity(Self::TAPE_SIZE * 2);
     let mut lookup: HashMap<(String, char), Transition> = HashMap::new();
 
     TuringMachine {
@@ -163,6 +166,16 @@ impl TuringMachine {
     self.write(inverse.output);
     self.current_state = Some(inverse.next);
   }
+
+  /// Displays the current content of the tape up until the first empty cell.
+  pub fn display_tape(&self) -> &[char] {
+    let Some(end) = self.memory_tape.iter().position(|&x| x == Self::EMPTY)
+    else {
+      return &self.memory_tape;
+    };
+
+    &self.memory_tape[..end]
+  }
 }
 
 #[cfg(test)]
@@ -221,11 +234,18 @@ mod tests {
     tm.memory_tape[0] = 'a';
 
     add_state(&mut tm, "START", 'a', '#', Direction::Right, "2");
-    add_state(&mut tm, "2", '_', 'a', Direction::Left, "START");
+    add_state(
+      &mut tm,
+      "2",
+      TuringMachine::EMPTY,
+      'a',
+      Direction::Left,
+      "START",
+    );
 
     assert_eq!('a', tm.read());
     tm.forward();
-    assert_eq!('_', tm.read());
+    assert_eq!(TuringMachine::EMPTY, tm.read());
     assert_eq!(Some("2".to_owned()), tm.current_state);
     tm.forward();
     assert_eq!('#', tm.read());
@@ -238,7 +258,14 @@ mod tests {
   fn tm_halt() {
     let mut tm = TuringMachine::new();
 
-    add_state(&mut tm, "START", '_', '#', Direction::Right, "HALT");
+    add_state(
+      &mut tm,
+      "START",
+      TuringMachine::EMPTY,
+      '#',
+      Direction::Right,
+      "HALT",
+    );
 
     assert_eq!(Some("START".to_owned()), tm.current_state);
     tm.forward();
@@ -256,7 +283,7 @@ mod tests {
       assert_eq!(char, tm.read());
       tm.step(char, Direction::Right);
     }
-    assert_eq!('_', tm.read());
+    assert_eq!(TuringMachine::EMPTY, tm.read());
   }
 
   #[test]
@@ -284,5 +311,16 @@ mod tests {
     assert_eq!('b', tm.read());
     tm.backward();
     assert_eq!('a', tm.read());
+  }
+
+  #[test]
+  fn tm_display_tape() {
+    let mut tm = TuringMachine::from("hello");
+
+    let expected: Vec<char> = "hello".chars().collect();
+    assert_eq!(expected, tm.display_tape());
+
+    tm.memory_tape.truncate(5);
+    assert_eq!(expected, tm.display_tape());
   }
 }
