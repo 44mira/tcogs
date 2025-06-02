@@ -53,11 +53,12 @@ pub struct TuringMachine {
 
 impl TuringMachine {
   pub const EMPTY: char = '_';
+  pub const TAPE_SIZE: usize = 2048;
 
   #[allow(unused_mut)]
   pub fn new() -> Self {
-    let mut memory_tape = vec![Self::EMPTY; 2048];
-    let mut undo_stack = Vec::with_capacity(4096);
+    let mut memory_tape = vec![Self::EMPTY; Self::TAPE_SIZE];
+    let mut undo_stack = Vec::with_capacity(Self::TAPE_SIZE * 2);
     let mut lookup: HashMap<(String, char), Transition> = HashMap::new();
 
     TuringMachine {
