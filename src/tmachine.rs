@@ -52,9 +52,11 @@ pub struct TuringMachine {
 }
 
 impl TuringMachine {
+  pub const EMPTY: char = '_';
+
   #[allow(unused_mut)]
   pub fn new() -> Self {
-    let mut memory_tape = vec!['_'; 2048];
+    let mut memory_tape = vec![Self::EMPTY; 2048];
     let mut undo_stack = Vec::with_capacity(4096);
     let mut lookup: HashMap<(String, char), Transition> = HashMap::new();
 
@@ -166,7 +168,11 @@ impl TuringMachine {
 
   /// Displays the current content of the tape up until the first empty cell.
   pub fn display_tape(&self) -> Vec<&char> {
-    self.memory_tape.iter().take_while(|&&x| x != '_').collect()
+    self
+      .memory_tape
+      .iter()
+      .take_while(|&&x| x != Self::EMPTY)
+      .collect()
   }
 }
 
@@ -226,11 +232,18 @@ mod tests {
     tm.memory_tape[0] = 'a';
 
     add_state(&mut tm, "START", 'a', '#', Direction::Right, "2");
-    add_state(&mut tm, "2", '_', 'a', Direction::Left, "START");
+    add_state(
+      &mut tm,
+      "2",
+      TuringMachine::EMPTY,
+      'a',
+      Direction::Left,
+      "START",
+    );
 
     assert_eq!('a', tm.read());
     tm.forward();
-    assert_eq!('_', tm.read());
+    assert_eq!(TuringMachine::EMPTY, tm.read());
     assert_eq!(Some("2".to_owned()), tm.current_state);
     tm.forward();
     assert_eq!('#', tm.read());
@@ -243,7 +256,14 @@ mod tests {
   fn tm_halt() {
     let mut tm = TuringMachine::new();
 
-    add_state(&mut tm, "START", '_', '#', Direction::Right, "HALT");
+    add_state(
+      &mut tm,
+      "START",
+      TuringMachine::EMPTY,
+      '#',
+      Direction::Right,
+      "HALT",
+    );
 
     assert_eq!(Some("START".to_owned()), tm.current_state);
     tm.forward();
@@ -261,7 +281,7 @@ mod tests {
       assert_eq!(char, tm.read());
       tm.step(char, Direction::Right);
     }
-    assert_eq!('_', tm.read());
+    assert_eq!(TuringMachine::EMPTY, tm.read());
   }
 
   #[test]
